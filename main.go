@@ -60,7 +60,7 @@ func main() {
 					return err
 				}
 
-				if err := json.Unmarshal([]byte(value.Value), doc); err != nil {
+				if err := json.Unmarshal([]byte(value.Value), &doc); err != nil {
 					return err
 				}
 
