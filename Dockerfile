@@ -1,6 +1,12 @@
+FROM golang:1.21 as builder
+WORKDIR /app
+COPY . .
+ARG GONOPROXY=*
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -o server
+
 FROM alpine:latest
 WORKDIR /app
-RUN wget "https://github.com/pocketbase/pocketbase/releases/download/v0.19.3/pocketbase_0.19.3_linux_arm64.zip"
-RUN unzip pocketbase* -d /app
+COPY --from=builder /app/server server
 EXPOSE 8090
-CMD ["./pocketbase", "serve", "--http", ":8090"]
+CMD ["./server", "serve", "--http", ":8090"]
