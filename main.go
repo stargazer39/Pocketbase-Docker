@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v5"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -38,6 +39,26 @@ func main() {
 					Execute()
 
 				return err
+			},
+			Middlewares: []echo.MiddlewareFunc{
+				apis.ActivityLogger(app),
+			},
+		})
+
+		e.Router.AddRoute(echo.Route{
+			Method: http.MethodGet,
+			Path:   "/api/secrets/:id",
+			Handler: func(c echo.Context) error {
+				id := c.PathParam("id")
+				var value Secret
+
+				err := app.Dao().DB().Select("value").From("secrets").Where(dbx.Like("name", id)).One(&value)
+
+				if err != nil {
+					return err
+				}
+
+				return c.JSON(http.StatusOK, value.Value)
 			},
 			Middlewares: []echo.MiddlewareFunc{
 				apis.ActivityLogger(app),
