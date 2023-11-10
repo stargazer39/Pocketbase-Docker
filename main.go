@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -14,7 +15,7 @@ import (
 type Secret struct {
 	Id    string `db:"id" json:"id"`
 	Name  string `db:"name" json:"name"`
-	Value any    `db:"value" json:"value"`
+	Value string `db:"value" json:"value"`
 }
 
 func main() {
@@ -51,6 +52,7 @@ func main() {
 			Handler: func(c echo.Context) error {
 				id := c.PathParam("id")
 				var value Secret
+				var doc any
 
 				err := app.Dao().DB().Select("value").From("secrets").Where(dbx.Like("name", id)).One(&value)
 
@@ -58,7 +60,11 @@ func main() {
 					return err
 				}
 
-				return c.JSON(http.StatusOK, value.Value)
+				if err := json.Unmarshal([]byte(value.Value), doc); err != nil {
+					return err
+				}
+
+				return c.JSON(http.StatusOK, doc)
 			},
 			Middlewares: []echo.MiddlewareFunc{
 				apis.ActivityLogger(app),
